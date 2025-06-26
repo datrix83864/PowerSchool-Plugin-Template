@@ -1,0 +1,34 @@
+
+name: Build and Release PowerSchool Plugin
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Update plugin.xml version
+        run: |
+          echo "Updating plugin.xml version to ${{ github.event.release.tag_name }}"
+          sed -i "s|<version>.*</version>|<version>${{ github.event.release.tag_name }}</version>|" plugin.xml
+
+      - name: Create plugin zip archive
+        run: |
+          mkdir -p dist
+          zip -r dist/powerschool-plugin-${{ github.event.release.tag_name }}.zip plugin.xml custom/
+
+      - name: Upload ZIP asset to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/powerschool-plugin-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
