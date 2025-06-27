@@ -1,97 +1,139 @@
-# Naming & Referencing Best Practices for PowerSchool Plugins
+# 📦 PowerSchool Plugin Naming & Referencing Guidelines
+
+_Updated: 2025-06-26_
+
+This document defines the best practices for naming, structuring, and referencing files in this PowerSchool plugin project. These standards ensure consistency, compatibility with PowerSchool’s plugin system, and ease of maintenance.
+
+Updated guidance for the latest PowerSchool plugin development practices and a template to copy is found on the [GitHub PowerSchool Plugin Template](https://github.com/datrix83864/PowerSchool-Plugin-Template)
 
 ---
 
-## Overview
+## 📁 Repository Naming
 
-PowerSchool merges **all plugins’ `/custom/` folders into one global `/custom/` directory** on the server. This means:
-
-- Your plugin’s files share the same `/custom/` URL root as other plugins and manual customizations.
-- To avoid conflicts, **use unique folder and file names** within your plugin.
-- Always reference assets and pages with root-relative URLs starting with `/custom/`.
+- Use **PascalCase** for your GitHub repository (e.g., `SchoologyPowerSync`).
+- This name is automatically used for:
+  - The internal plugin folder structure
+  - The plugin `.zip` filename
+  - Displayed labels inside PowerSchool (if dynamically injected)
 
 ---
 
-## 1. Folder Structure and Namespacing
+## 🗂 Plugin ZIP Structure
 
-Structure your plugin’s `custom` folder with a **unique namespace folder** to prevent collisions.
-
-### Recommended structure:
+The plugin build process generates a `.zip` with the following structure:
 
 ```html
-/custom
-    /pages
-        /admin
-            yourplugin_dashboard.html
-    /web_root
-        /yourpluginname
-            /scripts
-                main.js
-            /styles
-                style.css
-            /images
-                logo.png
+SchoologyPowerSync/ ← Matches repo name
+├── plugin.xml
+├── web_root/
+│ └── admin/
+│ | |── schoology/
+│ | |── schoology_api_settings.html
+├── pagecataloging/
+│ └── pages.json
+├── MessageKeys/ ← Optional
+│ └── en.properties
 ```
 
 ---
 
-## 2. Referencing Assets in Custom Pages
+## 🔧 plugin.xml
 
-Use root-relative URLs starting with `/custom/` and include your namespace folder.
+- Use a placeholder (`__VERSION__`) for the version field.
+- The build system replaces this with a numeric version from the GitHub tag (e.g. `0.1.0`).
 
-### Examples:
-
-```html
-<!-- Reference CSS -->
-<link rel="stylesheet" href="/custom/web_root/yourpluginname/styles/style.css" />
-
-<!-- Reference JavaScript -->
-<script src="/custom/web_root/yourpluginname/scripts/main.js" defer></script>
-
-<!-- Reference Images -->
-<img src="/custom/web_root/yourpluginname/images/logo.png" alt="Logo" />
+```xml
+<plugin xmlns="http://plugin.powerschool.pearson.com"
+        name="Name your plugin here"
+        version="__VERSION__"
+        description="Describe your plugin here.">
+</plugin>
 ```
 
-## 3. Referencing Custom Pages
+## 📄 pages.json (pagecataloging)
 
-Your pages live under /custom/pages/ after deployment.
+Must be named pages.json (not page_definitions.json)
 
-Use unique file and folder names to avoid conflicts.
+Must use a numeric version string (e.g., 0.1.0)
 
-Access pages by URLs like:
+Do not use "admin" as a contextType
 
-`/custom/pages/admin/yourplugin_dashboard.html`
+Example:
 
-## 4. Why Not Rename /custom/?
-
-The /custom/ path is a PowerSchool convention and shared namespace.
-
-Renaming it in URLs will break asset loading.
-
-Instead, use namespaced folders inside /custom/ for your plugin.
-
-## 5. Best Practices Summary
-
-| Practice                                                         | Reason                                      |
-| ---------------------------------------------------------------- | ------------------------------------------- |
-| Use a unique namespace folder inside `/custom/web_root/`         | Prevents asset conflicts with other plugins |
-| Reference assets with root-relative URLs starting `/custom/`     | Ensures paths work across all environments  |
-| Use unique names for custom pages                                | Avoids page filename collisions             |
-| Include `defer` in script tags or place scripts before `</body>` | Improves page load performance              |
-| Avoid hardcoding domains or environment-specific URLs            | Makes plugin portable and easier to deploy  |
-
-## 6. Example Custom Page Snippet
-
-```html
-<html>
-  <head>
-    <title>Your Plugin Dashboard</title>
-    <link rel="stylesheet" href="/custom/web_root/yourpluginname/styles/style.css" />
-    <script src="/custom/web_root/yourpluginname/scripts/main.js" defer></script>
-  </head>
-  <body>
-    <h1>Welcome to Your Plugin Dashboard</h1>
-    <img src="/custom/web_root/yourpluginname/images/logo.png" alt="Plugin Logo" />
-  </body>
-</html>
+```json
+{
+  "pages": [
+    {
+      "htmlID": "navAdminSchoologySettings",
+      "title": "Schoology API Settings",
+      "version": "__VERSION__",
+      "contextType": "main",
+      "requiredContext": "none",
+      "sortOrder": 100,
+      "parentHTMLID": "navAdminCustomization",
+      "pageURL": "/admin/schoology/schoology_api_settings.html"
+    }
+  ]
+}
 ```
+
+## 🔃 GitHub Automation
+
+The GitHub Action pipeline:
+
+Extracts the repository name and version tag
+
+Replaces `__VERSION__` in plugin.xml and pages.json
+
+Builds the plugin folder with the name of the repo
+
+Zips the folder into:
+
+```php-template
+dist/<repo-name>-<version-tag>.zip
+```
+
+Example:
+
+- Repo: SchoologyPowerSync
+- Tag: v0.1.0-beta
+- Outputs:
+  - SchoologyPowerSync/ (plugin folder)
+  - SchoologyPowerSync-0.1.0-beta.zip (final release file)
+  - Injected version: 0.1.0
+
+## 📛 Referencing HTML/CSS/JS
+
+- All paths should be relative to web_root, not custom/
+- Use .html extensions only (no .htm)
+- Example URL:
+
+```bash
+/admin/schoology/schoology_api_settings.html
+```
+
+## 🔐 Page Security
+
+- Use "contextType": "main" + "requiredContext": "none" for admin pages
+- Place pages under /admin/ to inherit admin security
+- Optionally add logic inside the page to verify user roles
+
+## 🛑 Anti-Patterns to Avoid
+
+|❌ Don’t Do This | ✅ Do This Instead |
+|-----------------|--------------------|
+| Use .htm extensions | Use .html everywhere|
+| Hardcode version strings | Inject from tag during build |
+| Use contextType: "admin" | Use contextType: "main" |
+| Use WEB_ROOT/ uppercase | Use web_root/ lowercase for consistency |
+| Reference custom/pages/ | Reference paths under web_root/ only |
+
+## 🌐 Optional Enhancements
+
+- Use MessageKeys/en.properties for i18n
+- Add plugin version visibility inside the UI
+- Include a CHANGELOG.md and auto-publish release notes
+
+---
+
+For questions or contributions, open an issue or PR in the repository.

@@ -1,34 +1,46 @@
-
-name: Build and Release PowerSchool Plugin
+name: Build & Release PowerSchool Plugin
 
 on:
   release:
     types: [created]
 
+env:
+  PLUGIN_NAME: ${{ github.event.repository.name }}
+
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install zip
-        run: sudo apt-get update && sudo apt-get install -y zip
-
-      - name: Update plugin.xml version
+      - name: Parse numeric version
+        id: version
         run: |
-          echo "Updating plugin.xml version to ${{ github.event.release.tag_name }}"
-          sed -i "s|<version>.*</version>|<version>${{ github.event.release.tag_name }}</version>|" plugin.xml
+          RAW_VERSION="${GITHUB_REF##*/}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          NUMERIC_VERSION=$(echo "$CLEAN_VERSION" | sed 's/[^0-9.].*//')
+          echo "NUMERIC_VERSION=$NUMERIC_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Create plugin zip archive
+      - name: Build plugin folder
         run: |
-          mkdir -p dist
-          zip -r dist/powerschool-plugin-${{ github.event.release.tag_name }}.zip plugin.xml custom/
+          mkdir -p dist/${PLUGIN_NAME}/web_root
+          cp -R WEB_ROOT/* dist/${PLUGIN_NAME}/web_root
 
-      - name: Upload ZIP asset to release
+          mkdir -p dist/${PLUGIN_NAME}/pagecataloging
+          sed "s/__VERSION__/${{ steps.version.outputs.NUMERIC_VERSION }}/g" pagecataloging/pages.json > dist/${PLUGIN_NAME}/pagecataloging/pages.json
+
+          sed "s/__VERSION__/${{ steps.version.outputs.NUMERIC_VERSION }}/g" plugin.xml > dist/${PLUGIN_NAME}/plugin.xml
+
+      - name: Zip plugin contents
+        run: |
+          cd dist/${PLUGIN_NAME}
+          zip -r ../${PLUGIN_NAME}-${{ github.ref_name }}.zip ./*
+          cd ../..
+
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/powerschool-plugin-${{ github.event.release.tag_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: dist/${{ env.PLUGIN_NAME }}-${{ github.ref_name }}.zip
+          token: ${{ secrets.GH_RELEASE_PAT }}
