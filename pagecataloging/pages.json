@@ -1,0 +1,14 @@
+{
+  "pages": [
+    {
+      "htmlID": "examplePage",
+      "title": "put the title of your page here",
+      "version": "__VERSION__",
+      "contextType": "staff",
+      "requiredContext": "none",
+      "sortOrder": 100,
+      "parentHTMLID": "navAdminCustomization",
+      "pageURL": "put the path to your page here"
+    }
+  ]
+}

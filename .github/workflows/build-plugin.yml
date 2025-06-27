@@ -43,4 +43,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/${{ env.PLUGIN_NAME }}-${{ github.ref_name }}.zip
-          token: ${{ secrets.GH_RELEASE_PAT }}
+          token: ${{ secrets.GH_PAT }}

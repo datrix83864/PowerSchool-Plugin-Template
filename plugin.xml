@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin>
-  <name>District Customizations</name>
-  <version>1.0</version>
-  <description>Standard UI & SIS customizations for [Your District]</description>
-  <extensions>
-    <extension>custom</extension>
-  </extensions>
+<plugin xmlns="http://plugin.powerschool.pearson.com" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://plugin.powerschool.pearson.com plugin.xsd"
+        name="Plugin Name Here"
+        version="__VERSION__"
+        description="Plugin Description Here">
+  <publisher name="Dalton Hawkins">
+    <contact email="dalton.hawkins@lposd.org"/>
+  </publisher>
 </plugin>

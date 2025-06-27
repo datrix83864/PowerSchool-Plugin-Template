@@ -10,6 +10,11 @@ This repository contains a minimal PowerSchool plugin with a few sample custom p
 - `WEB_ROOT/teachers/example_page.html`: Sample PowerSchool custom admin page
 - `.github/workflows/build-plugin.yml`: GitHub Action that packages the plugin and attaches a ZIP to each GitHub release
 
+## Required Changes
+
+- Update `plugin.xml` with your plugin name and description
+- In GitHub create a Personal access token with `repo` scope and add it as a secret named `GH_PAT`
+
 ## Usage
 
 1. Edit or add your PowerSchool custom pages under `WEB_ROOT/`
